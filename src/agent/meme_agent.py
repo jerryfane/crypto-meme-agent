@@ -1,62 +1,94 @@
+import json
 import yaml
 from pathlib import Path
 import random
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import Optional, Dict, List
+import os
+from dotenv import load_dotenv
 
-class MarxFrenAgent:
-    def __init__(self, config_path: str, model_path: str):
-        """Initialize Marx Fren Monke agent."""
+class MemeAgent:
+    def __init__(self, config_path: str, model_path: str, examples_path: str):
+        """Initialize MFM agent with configuration and examples."""
         self.config = self._load_config(config_path)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.examples = self._load_examples(examples_path)
+        
+        # Device setup for Mac MPS
+        if torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        elif torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")
+            
+        print(f"Using device: {self.device}")
+        
+        # Set environment variable for tokenizers
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         
-        # Initialize model and tokenizer
+        # Load model and tokenizer
+        load_dotenv()
+        self.model_path = model_path
+        self._initialize_model()
+    
+    def _load_config(self, config_path: str) -> Dict:
+        """Load YAML configuration file."""
+        with open(config_path, 'r') as f:
+            return yaml.safe_load(f)
+    
+    def _load_examples(self, examples_path: str) -> Dict[str, List[str]]:
+        """Load example tweets grouped by context."""
+        examples = {}
+        with open(examples_path, 'r') as f:
+            for line in f:
+                data = json.loads(line)
+                context = data['context']
+                if context not in examples:
+                    examples[context] = []
+                examples[context].append(data['tweet'])
+        return examples
+    
+    def _initialize_model(self):
+        """Initialize the model and tokenizer."""
+        print("Loading tokenizer...")
         self.tokenizer = AutoTokenizer.from_pretrained(
-            model_path,
+            self.model_path,
             token=os.getenv("HF_TOKEN"),
             padding_side="left"
         )
         self.tokenizer.pad_token = self.tokenizer.eos_token
         
+        print("Loading model...")
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_path,
+            self.model_path,
             token=os.getenv("HF_TOKEN"),
             device_map="auto",
             torch_dtype=torch.float16
         )
-        
-        # Load personality traits
-        self.name = self.config["agent"]["name"]
-        self.catchphrases = self.config["agent"]["catchphrases"]
     
-    def generate_tweet(self, context: Optional[str] = None) -> str:
-        """Generate a tweet based on optional context."""
-        system_prompt = """You are Marx Fren Monke (MFM), a lovably naive crypto trader living on Mars. 
-        Generate short, tweet-length posts (max 280 chars) in the 'fren-speak' style about your crypto adventures."""
+    def generate_tweet(self, context: Optional[str] = None, num_examples: int = 3) -> str:
+        """Generate a tweet with context-specific examples."""
+        # Select relevant examples
+        if context and context in self.examples:
+            selected_examples = random.sample(
+                self.examples[context], 
+                min(num_examples, len(self.examples[context]))
+            )
+        else:
+            all_examples = [tweet for tweets in self.examples.values() for tweet in tweets]
+            selected_examples = random.sample(all_examples, min(num_examples, len(all_examples)))
         
-        user_prompt = f"""Write a single tweet about {context if context else 'your latest crypto trading idea'}. 
-        Use fren-speak (ser, fren, gm, wagmi), include emojis, and show your endearing overconfidence."""
+        examples_text = "\n".join(f"Tweet {i+1}: {example}" for i, example in enumerate(selected_examples))
         
-        prompt = f"""[INST] <<SYS>>{system_prompt}<</SYS>>{user_prompt}[/INST]"""
-        
-        return self._generate_response(prompt)
-    
-    def reply_to_tweet(self, tweet_text: str) -> str:
-        """Generate a reply to a given tweet."""
-        system_prompt = """You are Marx Fren Monke (MFM), responding to another crypto trader's tweet.
-        Keep your reply short, funny, and show your endearing misunderstanding of crypto concepts."""
-        
-        user_prompt = f"""Someone tweeted: "{tweet_text}"
-        Write a single reply tweet. Use fren-speak and emojis."""
-        
-        prompt = f"""[INST] <<SYS>>{system_prompt}<</SYS>>{user_prompt}[/INST]"""
-        
-        return self._generate_response(prompt)
-    
-    def _generate_response(self, prompt: str) -> str:
-        """Internal method to generate responses."""
+        # Get prompt template from config
+        prompt = self.config['prompt']['format'].format(
+            system_message=self.config['prompt']['system_message'],
+            examples=examples_text,
+            context=context if context else 'crypto trading'
+        )
+
+        # Ensure inputs are on the correct device
         inputs = self.tokenizer(
             prompt,
             return_tensors="pt",
@@ -64,25 +96,27 @@ class MarxFrenAgent:
             return_attention_mask=True,
             truncation=True,
             max_length=512
-        ).to(self.device)
+        )
+        
+        # Move inputs to the correct device
+        input_ids = inputs.input_ids.to(self.device)
+        attention_mask = inputs.attention_mask.to(self.device)
+        
+        # Get generation settings from config
+        gen_config = self.config['meme_generation']
         
         outputs = self.model.generate(
-            input_ids=inputs.input_ids,
-            attention_mask=inputs.attention_mask,
-            max_new_tokens=70,
-            min_new_tokens=10,
-            temperature=0.9,
-            top_p=0.9,
-            top_k=50,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_new_tokens=gen_config['max_new_tokens'],
+            min_new_tokens=gen_config['min_new_tokens'],
+            temperature=gen_config['temperature'],
+            top_p=gen_config['top_p'],
+            top_k=gen_config['top_k'],
             do_sample=True,
             pad_token_id=self.tokenizer.eos_token_id,
-            repetition_penalty=1.2
+            repetition_penalty=gen_config['repetition_penalty']
         )
         
         generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return generated_text.split("[/INST]")[-1].strip()
-    
-    def _load_config(self, config_path: str) -> Dict:
-        """Load and parse the YAML configuration file."""
-        with open(config_path, 'r') as f:
-            return yaml.safe_load(f)
