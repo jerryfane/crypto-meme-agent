@@ -62,7 +62,7 @@ prompt:
 
 meme_generation:
   temperature: 0.85  # Slightly lower for more focused outputs
-  max_new_tokens: 80  # Shortened to enforce tweet length
+  max_new_tokens: 280  # Shortened to enforce tweet length
   min_new_tokens: 10
   top_p: 0.9
   top_k: 50

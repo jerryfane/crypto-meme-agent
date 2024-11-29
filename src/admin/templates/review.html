@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tweet Review Dashboard</title>
+    <style>
+        .tweet-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .actions {
+            margin-top: 10px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 60px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tweet Review Dashboard</h1>
+    <div id="tweets">
+        {% for tweet in tweets %}
+        <div class="tweet-card" id="tweet-{{ tweet.id }}">
+            <p><strong>Original:</strong> {{ tweet.text }}</p>
+            <textarea placeholder="Adjusted text (optional)">{{ tweet.text_adjusted or tweet.text }}</textarea>
+            <div class="actions">
+                <select class="score">
+                    <option value="">Score...</option>
+                    {% for i in range(1, 6) %}
+                    <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="updateTweet({{ tweet.id }}, 'approved')">Approve</button>
+                <button onclick="updateTweet({{ tweet.id }}, 'rejected')">Reject</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+    function updateTweet(tweetId, status) {
+        const card = document.getElementById(`tweet-${tweetId}`);
+        const textAdjusted = card.querySelector('textarea').value;
+        const score = card.querySelector('.score').value;
+
+        fetch(`/api/tweets/${tweetId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status: status,
+                text_adjusted: textAdjusted,
+                score: score ? parseInt(score) : null
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                card.remove();
+            }
+        });
+    }
+    </script>
+</body>
+</html>
