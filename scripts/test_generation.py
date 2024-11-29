@@ -8,7 +8,10 @@ def test_generation():
     # Initialize agent with all necessary paths
     agent = MemeAgent(
         config_path="config/agent_config.yaml",
-        model_path="meta-llama/Llama-3.2-3B-Instruct",
+        # model_path="meta-llama/Llama-3.2-3B-Instruct",
+        # model_path="meta-llama/Llama-3.1-8B-Instruct",
+        # model_path="nvidia/llama-3.1-Nemotron-70B-Instruct-HF",
+        model_path="AIDC-AI/Marco-o1",
         examples_path="data/training/example_tweets.jsonl"
     )
     

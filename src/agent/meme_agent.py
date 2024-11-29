@@ -66,6 +66,26 @@ class MemeAgent:
             device_map="auto",
             torch_dtype=torch.float16
         )
+
+    def _clean_output(self, text: str) -> str:
+        """Clean the generated output to remove meta-commentary."""
+        # Remove common meta-commentary patterns
+        lines = text.split('\n')
+        cleaned_lines = []
+        for line in lines:
+            # Skip lines that look like meta-commentary
+            if any(pattern in line.lower() for pattern in [
+                'note:', 'tweet:', 'example:', 'generated:', 'output:',
+                'let me know', 'please keep', 'would you like'
+            ]):
+                continue
+            cleaned_lines.append(line)
+        
+        # Join remaining lines and clean up
+        text = ' '.join(cleaned_lines)
+        # Remove any remaining [INST] tags
+        text = text.replace('[INST]', '').replace('[/INST]', '')
+        return text.strip()
     
     def generate_tweet(self, context: Optional[str] = None, num_examples: int = 3) -> str:
         """Generate a tweet with context-specific examples."""
@@ -119,4 +139,13 @@ class MemeAgent:
         )
         
         generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return generated_text.split("[/INST]")[-1].strip()
+        raw_output = generated_text.split("[/INST]")[-1].strip()
+        
+        # Clean the output
+        cleaned_tweet = self._clean_output(raw_output)
+        
+        # Ensure it's not too long for a tweet
+        if len(cleaned_tweet) > 280:
+            cleaned_tweet = cleaned_tweet[:277] + "..."
+            
+        return cleaned_tweet
