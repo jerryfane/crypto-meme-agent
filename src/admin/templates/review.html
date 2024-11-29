@@ -1,43 +1,179 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tweet Review Dashboard</title>
+    <title>MFM Tweet Review</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f7f9fc;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(to right, #2D3748, #4A5568);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header p {
+            margin-top: 8px;
+            opacity: 0.8;
+            font-size: 16px;
+        }
+
         .tweet-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #E2E8F0;
         }
+
         .actions {
-            margin-top: 10px;
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
+
         textarea {
             width: 100%;
-            min-height: 60px;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        select, button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #E2E8F0;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button {
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #F7FAFC;
+        }
+
+        button[onclick*="approved"] {
+            background: #48BB78;
+            color: white;
+            border: none;
+        }
+
+        button[onclick*="approved"]:hover {
+            background: #38A169;
+        }
+
+        button[onclick*="rejected"] {
+            background: #F56565;
+            color: white;
+            border: none;
+        }
+
+        button[onclick*="rejected"]:hover {
+            background: #E53E3E;
+        }
+
+        .no-tweets {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin: 20px 0;
+        }
+
+        .no-tweets h2 {
+            color: #2D3748;
+            margin-bottom: 15px;
+        }
+
+        .no-tweets p {
+            color: #4A5568;
+            margin-bottom: 10px;
+        }
+
+        .no-tweets code {
+            display: inline-block;
+            background: #EDF2F7;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: #2D3748;
+            font-family: monospace;
+        }
+
+        .context-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #EDF2F7;
+            border-radius: 4px;
+            color: #4A5568;
+            font-size: 12px;
+            margin-top: 8px;
         }
     </style>
 </head>
 <body>
-    <h1>Tweet Review Dashboard</h1>
-    <div id="tweets">
-        {% for tweet in tweets %}
-        <div class="tweet-card" id="tweet-{{ tweet.id }}">
-            <p><strong>Original:</strong> {{ tweet.text }}</p>
-            <textarea placeholder="Adjusted text (optional)">{{ tweet.text_adjusted or tweet.text }}</textarea>
-            <div class="actions">
-                <select class="score">
-                    <option value="">Score...</option>
-                    {% for i in range(1, 6) %}
-                    <option value="{{ i }}">{{ i }}</option>
-                    {% endfor %}
-                </select>
-                <button onclick="updateTweet({{ tweet.id }}, 'approved')">Approve</button>
-                <button onclick="updateTweet({{ tweet.id }}, 'rejected')">Reject</button>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="header">
+        <h1>Marx Fren Monke Tweet Review</h1>
+        <p>Review and approve generated tweets</p>
     </div>
+    
+    {% if tweets %}
+        <div id="tweets">
+            {% for tweet in tweets %}
+            <div class="tweet-card" id="tweet-{{ tweet.id }}">
+                <p><strong>Original:</strong> {{ tweet.text }}</p>
+                <span class="context-tag">{{ tweet.context }}</span>
+                <textarea placeholder="Adjusted text (optional)">{{ tweet.text_adjusted or tweet.text }}</textarea>
+                <div class="actions">
+                    <select class="score">
+                        <option value="">Score...</option>
+                        {% for i in range(1, 6) %}
+                        <option value="{{ i }}">{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="updateTweet({{ tweet.id }}, 'approved')">Approve</button>
+                    <button onclick="updateTweet({{ tweet.id }}, 'rejected')">Reject</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-tweets">
+            <h2>No Tweets to Review</h2>
+            <p>Generate some tweets first using the tweet generation script:</p>
+            <code>python scripts/run_agent.py</code>
+        </div>
+    {% endif %}
 
     <script>
     function updateTweet(tweetId, status) {
@@ -60,6 +196,9 @@
         .then(data => {
             if (data.success) {
                 card.remove();
+                if (document.querySelectorAll('.tweet-card').length === 0) {
+                    location.reload();
+                }
             }
         });
     }

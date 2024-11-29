@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from flask import Flask, render_template, request, jsonify
 from models.db_wrapper import DBWrapper
 

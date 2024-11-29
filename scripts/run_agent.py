@@ -52,7 +52,7 @@ def main():
                     continue
                 
                 tweet = agent.generate_tweet(context)
-                tweet_id = db.store_tweet(tweet)
+                tweet_id = db.store_tweet(text=tweet, context=context)
                 
                 context_counts[context] += 1
                 pbar.update(1)

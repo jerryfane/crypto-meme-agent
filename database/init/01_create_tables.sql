@@ -8,7 +8,8 @@ CREATE TABLE tweets (
     score INTEGER CHECK (score >= 1 AND score <= 5),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    sent_at TIMESTAMP WITH TIME ZONE
+    sent_at TIMESTAMP WITH TIME ZONE,
+    context VARCHAR(50)
 );
 
 -- Create function to update timestamp
