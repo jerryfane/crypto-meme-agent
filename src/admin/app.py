@@ -10,8 +10,20 @@ db = DBWrapper()
 
 @app.route('/')
 def index():
-    tweets = db.get_tweets_for_review()
-    return render_template('review.html', tweets=tweets)
+    status = request.args.get('status', 'review')
+    context = request.args.get('context', None)
+    
+    # Get stats, contexts, and filtered tweets
+    stats = db.get_tweets_stats()
+    contexts = db.get_contexts()
+    tweets = db.get_tweets_filtered(status=status, context=context)
+    
+    return render_template('review.html', 
+                         tweets=tweets,
+                         stats=stats,
+                         contexts=contexts,
+                         current_status=status,
+                         current_context=context)
 
 @app.route('/api/tweets/<int:tweet_id>', methods=['POST'])
 def update_tweet(tweet_id):
