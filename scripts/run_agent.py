@@ -20,6 +20,8 @@ def main():
     config_path = "config/agent_config.yaml"
     model_path = "AIDC-AI/Marco-o1"
     # model_path="meta-llama/Llama-3.2-3B-Instruct"
+    # model_path="chuanli11/Llama-3.2-3B-Instruct-uncensored"
+    model_path="google/gemma-2-2b-it"
     examples_path = "data/training/example_tweets.jsonl"
     
     # Configuration
@@ -33,7 +35,7 @@ def main():
     
     try:
         print("Initializing agent...")
-        agent = MemeAgent(config_path, model_path, examples_path)
+        agent = MemeAgent(config_path, model_path, examples_path, db=db)
         
         # Create a cyclic iterator for contexts
         context_cycle = cycle(contexts)

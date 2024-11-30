@@ -7,12 +7,14 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import Optional, Dict, List
 import os
 from dotenv import load_dotenv
+from src.models.db_wrapper import DBWrapper
 
 class MemeAgent:
-    def __init__(self, config_path: str, model_path: str, examples_path: str):
+    def __init__(self, config_path: str, model_path: str, examples_path: str, db: Optional[DBWrapper] = None):
         """Initialize MFM agent with configuration and examples."""
         self.config = self._load_config(config_path)
-        self.examples = self._load_examples(examples_path)
+        self.file_examples = self._load_examples(examples_path)
+        self.db = db
         
         # Device setup for Mac MPS
         if torch.backends.mps.is_available():
@@ -67,37 +69,78 @@ class MemeAgent:
             torch_dtype=torch.float16
         )
 
+    def _get_best_examples(self, context: Optional[str] = None) -> List[str]:
+        """Get best performing examples from the database"""
+        if not self.db:
+            return []
+            
+        best_tweets = self.db.get_best_tweets()
+        if not context:
+            return [tweet['text'] for tweet in best_tweets]
+            
+        return [
+            tweet['text'] for tweet in best_tweets 
+            if tweet['context'] == context
+        ]
+
     def _clean_output(self, text: str) -> str:
-        """Clean the generated output to remove meta-commentary."""
-        # Remove common meta-commentary patterns
-        lines = text.split('\n')
-        cleaned_lines = []
-        for line in lines:
-            # Skip lines that look like meta-commentary
-            if any(pattern in line.lower() for pattern in [
-                'note:', 'tweet:', 'example:', 'generated:', 'output:',
-                'let me know', 'please keep', 'would you like'
-            ]):
-                continue
-            cleaned_lines.append(line)
+        """Clean the generated output to remove system messages and format properly."""
+        # Remove system message sections
+        if "<<SYS>>" in text and "<</SYS>>" in text:
+            text = text.split("<</SYS>>")[1]  # Get content after system message
+
+        # Find the actual tweet content
+        if "Task:" in text:
+            text = text.split("Task:")[1]  # Get content after Task
+
+        # Clean up common artifacts
+        text = text.replace("[INST]", "").replace("[/INST]", "")
         
-        # Join remaining lines and clean up
-        text = ' '.join(cleaned_lines)
-        # Remove any remaining [INST] tags
-        text = text.replace('[INST]', '').replace('[/INST]', '')
+        # Remove any remaining newlines or multiple spaces
+        text = ' '.join(text.split())
+        
+        # Remove any remaining instruction markers at the start
+        instruction_markers = [
+            "Write ONLY",
+            "Must NOT",
+            "MUST BE",
+            "Generate ONE tweet",
+            "- Must",
+            "Write it in",
+        ]
+        
+        for marker in instruction_markers:
+            if text.strip().startswith(marker):
+                text = text.replace(marker, "", 1).strip()
+
+        # Remove hashtags
+        text = ' '.join(word for word in text.split() if not word.startswith('#'))
+        
         return text.strip()
     
     def generate_tweet(self, context: Optional[str] = None, num_examples: int = 3) -> str:
         """Generate a tweet with context-specific examples."""
-        # Select relevant examples
-        if context and context in self.examples:
-            selected_examples = random.sample(
-                self.examples[context], 
-                min(num_examples, len(self.examples[context]))
-            )
+        # Combine file examples and best performing tweets
+        available_examples = []
+        
+        # Get examples from file
+        if context and context in self.file_examples:
+            available_examples.extend(self.file_examples[context])
         else:
-            all_examples = [tweet for tweets in self.examples.values() for tweet in tweets]
-            selected_examples = random.sample(all_examples, min(num_examples, len(all_examples)))
+            available_examples.extend([
+                tweet for tweets in self.file_examples.values() 
+                for tweet in tweets
+            ])
+            
+        # Add best performing examples
+        best_examples = self._get_best_examples(context)
+        available_examples.extend(best_examples)
+        
+        # Select random examples from combined pool
+        selected_examples = random.sample(
+            available_examples,
+            min(num_examples, len(available_examples))
+        )
         
         examples_text = "\n".join(f"Tweet {i+1}: {example}" for i, example in enumerate(selected_examples))
         
@@ -143,9 +186,5 @@ class MemeAgent:
         
         # Clean the output
         cleaned_tweet = self._clean_output(raw_output)
-        
-        # Ensure it's not too long for a tweet
-        if len(cleaned_tweet) > 280:
-            cleaned_tweet = cleaned_tweet[:277] + "..."
             
         return cleaned_tweet
