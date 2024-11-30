@@ -34,7 +34,7 @@ ENV/
 .DS_Store
 
 # Model files and data
-models/
+database/backup.sql
 *.pt
 *.pth
 *.bin
