@@ -8,20 +8,23 @@ from dotenv import load_dotenv
 import os
 from itertools import cycle
 from tqdm import tqdm
+import time
 
 def main():
     # Load environment variables
     load_dotenv()
+    
+    # Check for required environment variables
+    if not os.getenv("OPENAI_API_KEY"):
+        raise ValueError("OPENAI_API_KEY not found in environment variables")
+    if not os.getenv("DATABASE_URL"):
+        raise ValueError("DATABASE_URL not found in environment variables")
     
     # Initialize the database
     db = DBWrapper()
     
     # Initialize the agent
     config_path = "config/agent_config.yaml"
-    model_path = "AIDC-AI/Marco-o1"
-    # model_path="meta-llama/Llama-3.2-3B-Instruct"
-    # model_path="chuanli11/Llama-3.2-3B-Instruct-uncensored"
-    model_path="google/gemma-2-2b-it"
     examples_path = "data/training/example_tweets.jsonl"
     
     # Configuration
@@ -35,7 +38,7 @@ def main():
     
     try:
         print("Initializing agent...")
-        agent = MemeAgent(config_path, model_path, examples_path, db=db)
+        agent = MemeAgent(config_path, examples_path, db=db)
         
         # Create a cyclic iterator for contexts
         context_cycle = cycle(contexts)
@@ -53,15 +56,26 @@ def main():
                 if context_counts[context] >= tweets_per_context:
                     continue
                 
-                tweet = agent.generate_tweet(context)
-                tweet_id = db.store_tweet(text=tweet, context=context)
-                
-                context_counts[context] += 1
-                pbar.update(1)
-                
-                # Update progress bar description with context counts
-                status = ", ".join([f"{k}: {v}/{tweets_per_context}" for k, v in context_counts.items()])
-                pbar.set_description(f"Generating tweets | {status}")
+                try:
+                    # Generate and store tweet
+                    tweet = agent.generate_tweet(context)
+                    tweet_id = db.store_tweet(text=tweet, context=context)
+                    
+                    context_counts[context] += 1
+                    pbar.update(1)
+                    
+                    # Update progress bar description with context counts
+                    status = ", ".join([f"{k}: {v}/{tweets_per_context}" 
+                                      for k, v in context_counts.items()])
+                    pbar.set_description(f"Generating tweets | {status}")
+                    
+                    # Add a small delay to avoid rate limits
+                    time.sleep(1)
+                    
+                except Exception as e:
+                    print(f"\nError generating tweet for context {context}: {e}")
+                    print("Continuing with next tweet...")
+                    continue
                 
     except Exception as e:
         print(f"Error in tweet generation: {e}")

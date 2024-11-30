@@ -2,38 +2,22 @@ import json
 import yaml
 from pathlib import Path
 import random
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import Optional, Dict, List
 import os
 from dotenv import load_dotenv
-from src.models.db_wrapper import DBWrapper
+from openai import OpenAI
 
 class MemeAgent:
-    def __init__(self, config_path: str, model_path: str, examples_path: str, db: Optional[DBWrapper] = None):
+    def __init__(self, config_path: str, examples_path: str, db=None):
         """Initialize MFM agent with configuration and examples."""
         self.config = self._load_config(config_path)
         self.file_examples = self._load_examples(examples_path)
         self.db = db
         
-        # Device setup for Mac MPS
-        if torch.backends.mps.is_available():
-            self.device = torch.device("mps")
-        elif torch.cuda.is_available():
-            self.device = torch.device("cuda")
-        else:
-            self.device = torch.device("cpu")
-            
-        print(f"Using device: {self.device}")
-        
-        # Set environment variable for tokenizers
-        os.environ["TOKENIZERS_PARALLELISM"] = "false"
-        
-        # Load model and tokenizer
+        # Initialize OpenAI client
         load_dotenv()
-        self.model_path = model_path
-        self._initialize_model()
-    
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
     def _load_config(self, config_path: str) -> Dict:
         """Load YAML configuration file."""
         with open(config_path, 'r') as f:
@@ -50,25 +34,26 @@ class MemeAgent:
                     examples[context] = []
                 examples[context].append(data['tweet'])
         return examples
-    
-    def _initialize_model(self):
-        """Initialize the model and tokenizer."""
-        print("Loading tokenizer...")
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_path,
-            token=os.getenv("HF_TOKEN"),
-            padding_side="left"
-        )
-        self.tokenizer.pad_token = self.tokenizer.eos_token
-        
-        print("Loading model...")
-        self.model = AutoModelForCausalLM.from_pretrained(
-            self.model_path,
-            token=os.getenv("HF_TOKEN"),
-            device_map="auto",
-            torch_dtype=torch.float16
-        )
 
+    def _clean_output(self, text: str) -> str:
+        """Clean the generated output."""
+        # Remove any remaining instruction markers at the start
+        instruction_markers = [
+            "Output:",
+            "Response:",
+            "Joke:",
+            "Generated joke:",
+            "Here's a joke:"
+        ]
+        
+        for marker in instruction_markers:
+            if text.startswith(marker):
+                text = text[len(marker):].strip()
+        
+        # Remove hashtags and clean up whitespace
+        text = ' '.join(word for word in text.split() if not word.startswith('#'))
+        return text.strip()
+    
     def _get_best_examples(self, context: Optional[str] = None) -> List[str]:
         """Get best performing examples from the database"""
         if not self.db:
@@ -82,45 +67,10 @@ class MemeAgent:
             tweet['text'] for tweet in best_tweets 
             if tweet['context'] == context
         ]
-
-    def _clean_output(self, text: str) -> str:
-        """Clean the generated output to remove system messages and format properly."""
-        # Remove system message sections
-        if "<<SYS>>" in text and "<</SYS>>" in text:
-            text = text.split("<</SYS>>")[1]  # Get content after system message
-
-        # Find the actual tweet content
-        if "Task:" in text:
-            text = text.split("Task:")[1]  # Get content after Task
-
-        # Clean up common artifacts
-        text = text.replace("[INST]", "").replace("[/INST]", "")
-        
-        # Remove any remaining newlines or multiple spaces
-        text = ' '.join(text.split())
-        
-        # Remove any remaining instruction markers at the start
-        instruction_markers = [
-            "Write ONLY",
-            "Must NOT",
-            "MUST BE",
-            "Generate ONE tweet",
-            "- Must",
-            "Write it in",
-        ]
-        
-        for marker in instruction_markers:
-            if text.strip().startswith(marker):
-                text = text.replace(marker, "", 1).strip()
-
-        # Remove hashtags
-        text = ' '.join(word for word in text.split() if not word.startswith('#'))
-        
-        return text.strip()
     
     def generate_tweet(self, context: Optional[str] = None, num_examples: int = 3) -> str:
         """Generate a tweet with context-specific examples."""
-        # Combine file examples and best performing tweets
+        # Combine file examples and database examples
         available_examples = []
         
         # Get examples from file
@@ -132,59 +82,49 @@ class MemeAgent:
                 for tweet in tweets
             ])
             
-        # Add best performing examples
-        best_examples = self._get_best_examples(context)
-        available_examples.extend(best_examples)
+        # Add best performing examples from database
+        if self.db:
+            best_examples = self._get_best_examples(context)
+            if best_examples:
+                available_examples.extend(best_examples)
         
-        # Select random examples from combined pool
-        selected_examples = random.sample(
-            available_examples,
-            min(num_examples, len(available_examples))
+        # Select random examples, prioritizing database examples
+        selected_examples = []
+        db_examples = [ex for ex in available_examples if ex in best_examples] if self.db else []
+        file_examples = [ex for ex in available_examples if ex not in db_examples]
+        
+        # Try to include at least one database example if available
+        if db_examples:
+            selected_examples.append(random.choice(db_examples))
+            num_examples -= 1
+        
+        # Fill remaining slots with random examples
+        remaining_examples = db_examples + file_examples
+        if remaining_examples and num_examples > 0:
+            selected_examples.extend(random.sample(
+                remaining_examples,
+                min(num_examples, len(remaining_examples))
+            ))
+        
+        examples_text = "\n".join(f"Example {i+1}: {example}" 
+                                for i, example in enumerate(selected_examples))
+        
+        # Generate using OpenAI API
+        response = self.client.chat.completions.create(
+            model="gpt-4o",  # Changed from gpt-4-0125-preview
+            messages=[
+                {"role": "system", "content": self.config['prompt']['system_message']},
+                {"role": "user", "content": f"Examples:\n{examples_text}\n\nGenerate ONE tweet about {context}"}
+            ],
+            temperature=self.config['meme_generation']['temperature'],
+            max_tokens=self.config['meme_generation']['max_new_tokens'],
+            top_p=self.config['meme_generation']['top_p'],
+            presence_penalty=0.1,
+            frequency_penalty=0.1
         )
         
-        examples_text = "\n".join(f"Tweet {i+1}: {example}" for i, example in enumerate(selected_examples))
+        # Extract and clean the response
+        generated_text = response.choices[0].message.content
+        cleaned_tweet = self._clean_output(generated_text)
         
-        # Get prompt template from config
-        prompt = self.config['prompt']['format'].format(
-            system_message=self.config['prompt']['system_message'],
-            examples=examples_text,
-            context=context if context else 'crypto trading'
-        )
-
-        # Ensure inputs are on the correct device
-        inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt",
-            padding=True,
-            return_attention_mask=True,
-            truncation=True,
-            max_length=512
-        )
-        
-        # Move inputs to the correct device
-        input_ids = inputs.input_ids.to(self.device)
-        attention_mask = inputs.attention_mask.to(self.device)
-        
-        # Get generation settings from config
-        gen_config = self.config['meme_generation']
-        
-        outputs = self.model.generate(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            max_new_tokens=gen_config['max_new_tokens'],
-            min_new_tokens=gen_config['min_new_tokens'],
-            temperature=gen_config['temperature'],
-            top_p=gen_config['top_p'],
-            top_k=gen_config['top_k'],
-            do_sample=True,
-            pad_token_id=self.tokenizer.eos_token_id,
-            repetition_penalty=gen_config['repetition_penalty']
-        )
-        
-        generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        raw_output = generated_text.split("[/INST]")[-1].strip()
-        
-        # Clean the output
-        cleaned_tweet = self._clean_output(raw_output)
-            
         return cleaned_tweet
