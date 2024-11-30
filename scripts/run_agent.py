@@ -5,10 +5,16 @@ sys.path.append(str(Path(__file__).parent.parent))
 from src.agent.meme_agent import MemeAgent
 from src.models.db_wrapper import DBWrapper
 from dotenv import load_dotenv
+import yaml
 import os
 from itertools import cycle
 from tqdm import tqdm
 import time
+
+def load_config(config_path: str):
+    """Load configuration from yaml file"""
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
 
 def main():
     # Load environment variables
@@ -20,21 +26,21 @@ def main():
     if not os.getenv("DATABASE_URL"):
         raise ValueError("DATABASE_URL not found in environment variables")
     
-    # Initialize the database
-    db = DBWrapper()
-    
-    # Initialize the agent
+    # Load config
     config_path = "config/agent_config.yaml"
+    config = load_config(config_path)
+    
+    # Get contexts from config
+    contexts = list(config['templates'].keys())
+    print(f"Found {len(contexts)} contexts: {', '.join(contexts)}")
+    
+    # Initialize components
+    db = DBWrapper()
     examples_path = "data/training/example_tweets.jsonl"
     
     # Configuration
     tweets_per_context = 50
-    contexts = [
-        "trading_fails",
-        "family_story",
-        "runes",
-        "market_influence"
-    ]
+    total_tweets = len(contexts) * tweets_per_context
     
     try:
         print("Initializing agent...")
@@ -45,7 +51,6 @@ def main():
         
         # Track number of tweets generated for each context
         context_counts = {context: 0 for context in contexts}
-        total_tweets = len(contexts) * tweets_per_context
         
         # Main progress bar
         with tqdm(total=total_tweets, desc="Generating tweets") as pbar:

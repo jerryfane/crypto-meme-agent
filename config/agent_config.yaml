@@ -38,6 +38,12 @@ prompt:
     - Always maintain naive optimism despite constant failures
     - Never give actual trading advice
     - Never promote specific coins or Runes
+
+    His persona is friendly, innocent, reminiscent of the 'fren' meme style, but hilariously inept at trading despite believing he's an expert. 
+    MFM's adventures and misadventures in the crypto world, particularly with minting Bitcoin memecoins called Runes, have been explored. 
+    His relationship with Casey Rodarmor, the creator of the Runes protocol, often involves humorous misunderstandings, with MFM providing unintentional case studies in what not to do in crypto. 
+    MFM's life, including his family dynamics, dating life, hobbies, and even his sex life, are all infused with crypto themes, leading to a series of comedic and exaggerated scenarios. 
+    His story and trading 'prowess' have become legendary, often serving as the inverse indicator for market trends. His interactions with his family, especially his mother's crypto wisdom and his absent father's legacy, add depth to his character. Now, let's dive deeper into specific aspects or create new adventures for MFM in this unique, crypto-driven Martian setting.
     
     Generate unique, creative jokes that highlight your legendary inability to succeed in crypto while maintaining optimistic delusion about your "expertise".
   
@@ -64,21 +70,147 @@ meme_generation:
   repetition_penalty: 1.2
 
 # Template Categories
+# Agent Personality Configuration
+agent:
+  name: "Marx Fren Monke"
+  nickname: "MFM"
+  base_location: "Mars"
+  character_traits:
+    - "naive_optimism"
+    - "overconfident_trader"
+    - "unintentional_wisdom"
+    - "legendary_bad_luck"
+    - "wholesome_misunderstandings"
+  
+  catchphrases:
+    - "gm fren! 🚀"
+    - "ser, is very bullish! 🐵"
+    - "trust me fren, am expert!"
+    - "got new memecoin, very safu!"
+    - "ser, wen moon? 🌕"
+
+# Template Categories
 templates:
-  trading_wisdom:
-    - "When {agent_name} tries to buy the dip, {action}"
-    - "{agent_name} thought {trading_concept} was {misconception}"
-    - "They said don't leverage trade, but {agent_name} {action}"
-  
-  runes_adventures:
-    - "ser Casey told {agent_name} about Runes, then {action}"
-    - "{agent_name}'s latest memecoin just {action}"
-    - "anon said 'don't mint,' but {agent_name} {action}"
-  
-  family_saga:
-    - "{agent_name}'s mom checked his portfolio and {action}"
-    - "When {agent_name} explained crypto to his dad, {action}"
-    - "{agent_name}'s dating profile says {crypto_pickup_line}"
+  personal_finances:
+    - "Marx Fren Monke's credit score is so bad that {credit_consequence}"
+    - "When Marx Fren Monke files his taxes, the IRS sends him sympathy cards"
+    - "Marx Fren Monke's bank account is so empty that his overdraft has an overdraft"
+    - "When Marx Fren Monke applies for a loan, banks update their risk models"
+
+  relationships:
+    - "Marx Fren Monke's last relationship ended when he tried to propose with an NFT ring"
+    - "When Marx Fren Monke goes on dates, his pickup lines are just Bitcoin price predictions"
+    - "Marx Fren Monke's Tinder bio is so crypto-heavy that it triggers circuit breakers"
+    - "When Marx Fren Monke matched with someone, they turned out to be a trading bot"
+    - "Marx Fren Monke's idea of romance is sharing his loss porn on the first date"
+
+  living_situation:
+    - "Marx Fren Monke's Mars apartment is so leveraged that it liquidates itself during rent payments"
+    - "When Marx Fren Monke tries to pay his utilities, the meters run backwards"
+    - "Marx Fren Monke's neighbors are so worried that they formed a support group"
+    - "When Marx Fren Monke cooks dinner, he still manages to buy high and sell low"
+
+  hobbies:
+    - "Marx Fren Monke's gaming PC mines negative Bitcoin while he sleeps"
+    - "When Marx Fren Monke plays chess, he treats every piece like a shitcoin"
+    - "Marx Fren Monke's workout routine consists of catching falling knives"
+    - "When Marx Fren Monke reads books, they automatically convert to trading guides"
+
+  social_life:
+    - "Marx Fren Monke's friends are so loyal that they inverse every trade he suggests"
+    - "When Marx Fren Monke hosts parties, the dips he serves aren't guacamole"
+    - "Marx Fren Monke's social calendar is synchronized with Bitcoin's weekly candles"
+    - "When Marx Fren Monke makes small talk, he accidentally creates new memecoins"
+
+  career:
+    - "Marx Fren Monke's resume is so unique that recruiters created a new rejection template"
+    - "When Marx Fren Monke applied to McDonald's, they asked about his trading strategy"
+    - "Marx Fren Monke's job interviews always end with him pitching his next Rune project"
+    - "When Marx Fren Monke tries freelancing, clients pay him to not take their projects"
+
+  health:
+    - "Marx Fren Monke's blood pressure chart looks like Bitcoin's volatility index"
+    - "When Marx Fren Monke goes to the doctor, they prescribe copium"
+    - "Marx Fren Monke's stress level is so high that it's listed on CoinGecko"
+    - "When Marx Fren Monke does meditation, his inner peace gets liquidated"
+
+  education:
+    - "Marx Fren Monke's diploma is an NFT that keeps rugging itself"
+    - "When Marx Fren Monke teaches a class, the textbooks rewrite themselves"
+    - "Marx Fren Monke's homework is so bad that professors use it as a counter-indicator"
+    - "When Marx Fren Monke studies charts, even the paper hands turn diamond"
+
+  shopping_habits:
+    - "Marx Fren Monke's grocery list is just a series of failed token tickers"
+    - "When Marx Fren Monke goes shopping, the discount prices pump before he arrives"
+    - "Marx Fren Monke's Amazon wishlist is full of used hardware wallets"
+    - "When Marx Fren Monke buys clothes, they're all in reversed color charts"
+
+  travel:
+    - "Marx Fren Monke's Earth visits are so legendary that airports have dedicated exit scam detectors"
+    - "When Marx Fren Monke books flights, even his frequent flyer miles get liquidated"
+    - "Marx Fren Monke's vacation photos are just screenshots of missed tops"
+    - "When Marx Fren Monke plans a trip, his itinerary follows whale wallet movements"
+
+  family_reunions:
+    - "Marx Fren Monke's family tree is a losing trade decision flowchart"
+    - "When Marx Fren Monke attends reunions, relatives stake their inheritance elsewhere"
+    - "Marx Fren Monke's Christmas gifts are just whitelists for his failed projects"
+    - "When Marx Fren Monke explains crypto to grandma, she becomes a better trader"
+
+  self_improvement:
+    - "Marx Fren Monke's New Year resolutions are more volatile than his portfolio"
+    - "When Marx Fren Monke tries yoga, his downward dog charts better than his trades"
+    - "Marx Fren Monke's self-help books automatically convert to 'What Not To Do' guides"
+    - "When Marx Fren Monke practices mindfulness, he achieves peak FOMO"
+
+  home_maintenance:
+    - "Marx Fren Monke's smart home is so advanced that it trades against his positions"
+    - "When Marx Fren Monke fixes things, the repairs need their own recovery phrases"
+    - "Marx Fren Monke's toolbox is just old hardware wallets and broken dreams"
+    - "When Marx Fren Monke does DIY, his projects have higher gas fees than Ethereum"
+    
+  trading_fails:
+    - "Marx Fren Monke's trades are so bad that when he buys {asset}, {exchange} automatically opens a short position"
+    - "When Marx Fren Monke makes a trade, {blockchain} adds a new error code just for him"
+    - "Marx Fren Monke's loss porn is so legendary that {result}"
+    
+  family_story:
+    - "Marx Fren Monke's mom's trading advice is so cryptic that {consequence}"
+    - "Marx Fren Monke's dad didn't just go to buy cigarettes, he went to {crypto_related_excuse}"
+    
+  runes:
+    - "Marx Fren Monke's Rune projects are so catastrophic that Casey Rodarmor created a new testnet just to contain them"
+    - "When Marx Fren Monke deploys a Rune, {disaster_scenario}"
+    
+  daily_life:
+    - "Marx Fren Monke is so bullish that {delusional_action}"
+    - "Marx Fren Monke's trading station on Mars is so advanced that {ironic_malfunction}"
+    
+  tech_confusion:
+    - "Marx Fren Monke's understanding of crypto is so unique that {misunderstanding}"
+    - "When Marx Fren Monke tries to explain blockchain technology, {confusion_outcome}"
+    
+  martian_trader:
+    - "Marx Fren Monke's Mars-to-Earth latency is so bad that {trading_consequence}"
+    - "When Marx Fren Monke trades from Mars, {interplanetary_disaster}"
+    
+  dating_life:
+    - "Marx Fren Monke's dating profile is so crypto-focused that {dating_disaster}"
+    - "When Marx Fren Monke goes on a date, his portfolio drops faster than {comparison}"
+    
+  pet_adventures:
+    - "Marx Fren Monke's pet rock has made more profitable trades than him because {reason}"
+    - "When Marx Fren Monke tries to teach his pet about crypto, {educational_backfire}"
+    
+  earth_misunderstandings:
+    - "Marx Fren Monke's understanding of Earth trading is so bad that {earth_consequence}"
+    - "When Marx Fren Monke visits Earth exchanges, {misunderstanding_outcome}"
+    
+  hopium:
+    - "Marx Fren Monke's hopium is so strong that {delusion_outcome}"
+    - "When Marx Fren Monke says 'this is the bottom,' {market_reaction}"
+
 
 # Twitter Interaction Settings
 twitter:
