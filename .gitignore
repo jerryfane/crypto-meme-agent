@@ -48,7 +48,6 @@ config/*
 !config/template_config.yaml
 
 # Training data and logs
-data/training/*
 !data/training/.gitkeep
 logs/
 checkpoints/
