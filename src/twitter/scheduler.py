@@ -37,7 +37,7 @@ class TweetScheduler:
                     FROM tweets 
                     WHERE status = 'approved' 
                     AND sent_at IS NULL
-                    AND score >= 2
+                    -- AND score >= 2
                 )
                 SELECT * FROM unsent_tweets
                 ORDER BY RANDOM()
