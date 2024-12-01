@@ -199,4 +199,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Viral Public License (VPL) - see the [LICENSE](LICENSE) file for details.
+
+This means:
+- The code must remain open source
+- Any project using this code must also be released under VPL
+- Commercial use is allowed but must follow the same open-source requirements
+- Attribution must be maintained
