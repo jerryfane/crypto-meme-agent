@@ -1,4 +1,4 @@
-# Crypto Meme Agent 🚀
+# Crypto Meme Agent - Marx Fren Monke
 
 A GPT-4 powered agent that generates crypto-themed content. Originally created to power Marx Fren Monke ([@MarxFrenMonke](https://x.com/MarxFrenMonke)) - a hilariously unsuccessful Monke crypto trader from Mars.
 
