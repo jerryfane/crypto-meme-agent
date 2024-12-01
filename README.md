@@ -74,20 +74,12 @@ DB_PASSWORD=memeagent
 
 Key sections to customize:
 ```yaml
-agent:
-  name: "Your Agent Name"
-  nickname: "Nickname"
-  base_location: "Location"
-  character_traits:
-    - "trait1"
-    - "trait2"
-  catchphrases:
-    - "catchphrase1"
-    - "catchphrase2"
-
 prompt:
   system_message: |
     [Your agent's personality description]
+  
+  format: |
+    [Your agent's style format]
 
 templates:
   [customize template categories and formats]
