@@ -46,23 +46,20 @@ docker compose up -d
 
 ## ⚙️ Configuration
 
-1. Create a `.env` file in the root directory with these required credentials:
+1. Create a `.env` file in the root directory:
+
 ```env
-# Twitter API Credentials
-TWITTER_API_KEY=your_api_key
-TWITTER_API_SECRET=your_api_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
+# Database
+DATABASE_URL=postgresql://memeagent:memeagent@localhost:5432/crypto_meme_agent
 
 # OpenAI API
 OPENAI_API_KEY=your_openai_api_key
 
-# Database Configuration (if different from default)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=crypto_meme_agent
-DB_USER=memeagent
-DB_PASSWORD=memeagent
+# Twitter API (OAuth 1.0a)
+TWITTER_API_KEY=your_api_key
+TWITTER_API_SECRET=your_api_secret
+TWITTER_ACCESS_TOKEN=your_access_token
+TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
 ```
 
 2. Configure your agent's personality by modifying `config/agent_config.yaml`. This file defines:
